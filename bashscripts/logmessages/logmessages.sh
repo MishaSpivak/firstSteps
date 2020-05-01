@@ -42,5 +42,4 @@ else
 	continue
 fi
 done
-number_of_line_after_cycle=$(awk -F : '{print $1}' test14 | sort -n | tail -n 1 )
 wc test1 test5
