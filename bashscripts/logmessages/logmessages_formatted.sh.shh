@@ -1,0 +1,43 @@
+#!/bin/bash
+# Parse /var/log/messages
+# Get every message from every even second
+# Get every odd word from that every message
+# Replace all vowels with letter "s" in all these words
+# Count the letters "s" in resulting message
+# if remnant of divsion of that number by three is not 0, then repeat the loop, discarding first 10 messages in the log until the remnant is 0
+
+
+# Get messages dated with even seconds
+EVEN_MESSAGES=$(sudo awk '$3 ~ /\<.{6}[0-6][0,2,4,6,8]/ { print }' /var/log/messages)
+
+# Get every odd word from those messages
+ODD_WORDS=$(echo "$EVEN_MESSAGES" | awk '{ for (i=2;i<=NF;i+=2) $i="" } 1')
+
+# Replace all vowels with letter "s" in all these words
+NO_MORE_VOWELS=$(echo "$ODD_WORDS" | sed "s/[aeiouAEIOUS]/s/g")
+
+# Count lines in the file
+LINES_COUNT=$(echo "$NO_MORE_VOWELS" | wc -l)
+
+# Loop through the file, substracting the first 10 lines
+for ((q = $LINES_COUNT ; q <= $LINES_COUNT ; q=q-10)); do
+	
+	# Get the message
+	FINAL_MESSAGE=$(echo "$NO_MORE_VOWELS" | tail -n $q)
+	
+	# Count letters "s" in the resulting message
+	S_COUNT=$(echo $FINAL_MESSAGE | tr -cd 's' | wc -m)
+	
+    if (($S_COUNT % 3 == 0)) 2>/dev/null
+    then
+        echo -e "\e[32msuccess\e[0m"
+        break
+	elif (( $S_COUNT % 3 != 0 && q <= 10 ))
+	then
+		echo -e "\e[31mMax retries reached, script will fail now\e[0m"
+		break
+    else
+        echo -e "\e[31mretying\e[0m"
+        continue
+    fi
+done
